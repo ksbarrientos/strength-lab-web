@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Strength Lab — Entrenamiento en Merliot{% endblock %}
+
+{% block content %}
+{# HERO #}
+<section id="inicio" class="relative min-h-screen flex items-center justify-center text-center pt-16"
+         style="background: radial-gradient(circle at 50% 30%, #1c1c22 0%, #0d0d0f 70%);">
+    <div class="max-w-4xl px-4">
+        <p class="text-acento font-bold uppercase tracking-[0.3em] mb-4">Merliot · El Salvador</p>
+        <h1 class="font-titulares text-6xl md:text-8xl leading-none uppercase">
+            Transforma<br>
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-acento to-acento_naranja">
+                Tu Cuerpo
+            </span>
+        </h1>
+        <p class="mt-6 text-lg text-zinc-400 max-w-2xl mx-auto">
+            Entrenamiento personalizado con los mejores entrenadores.
+            Agenda tu día de prueba gratis y descubre la experiencia {{ config.nombre_gimnasio }}.
+        </p>
+        <button data-abrir-reserva
+                class="mt-10 bg-acento hover:bg-acento_naranja px-10 py-4 rounded-full font-bold uppercase tracking-wide text-lg transition transform hover:scale-105">
+            Reserva tu día gratis
+        </button>
+    </div>
+</section>
+
+{# PLANES #}
+<section id="planes" class="max-w-6xl mx-auto px-4 py-24">
+    <h2 class="font-titulares text-5xl uppercase text-center mb-4">Planes de <span class="text-acento">Entrenamiento</span></h2>
+    <p class="text-center text-zinc-400 mb-12 max-w-2xl mx-auto">Elige el plan que mejor se adapte a tus objetivos.</p>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {% for plan in planes %}
+        <div class="relative rounded-2xl border {% if plan.es_popular %}border-acento bg-gradient-to-b from-zinc-900 to-zinc-950 scale-105{% else %}border-zinc-800 bg-zinc-900{% endif %} p-8 flex flex-col">
+            {% if plan.es_popular %}
+            <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-acento text-white text-xs font-bold uppercase px-4 py-1 rounded-full">
+                Más Popular
+            </span>
+            {% endif %}
+
+            <h3 class="font-titulares text-2xl uppercase">{{ plan.nombre }}</h3>
+            {% if plan.sesiones_texto %}
+            <p class="text-zinc-400 text-sm mt-1">{{ plan.sesiones_texto }}</p>
+            {% endif %}
+
+            <div class="my-6">
+                <span class="font-titulares text-5xl text-acento">${{ plan.precio|floatformat:0 }}</span>
+            </div>
+
+            {% if plan.descripcion %}
+            <p class="text-zinc-400 text-sm mb-4">{{ plan.descripcion }}</p>
+            {% endif %}
+
+            {% if plan.beneficios %}
+            <ul class="space-y-2 text-sm text-zinc-300 mb-8">
+                {% for beneficio in plan.beneficios.splitlines %}
+                <li class="flex items-start gap-2">
+                    <span class="text-acento">✓</span> {{ beneficio }}
+                </li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+
+            <button data-abrir-reserva
+                    class="mt-auto w-full py-3 rounded-full font-bold uppercase text-sm transition
+                           {% if plan.es_popular %}
+                               bg-acento hover:bg-acento_naranja
+                           {% else %}
+                               border border-zinc-600 hover:border-acento hover:text-acento
+                           {% endif %}">
+                Empezar ahora
+            </button>
+        </div>
+        {% empty %}
+        <p class="col-span-full text-center text-zinc-500">Aún no hay planes disponibles.</p>
+        {% endfor %}
+    </div>
+</section>
+
+{# UBICACIÓN Y HORARIOS #}
+<section id="ubicacion" class="bg-zinc-950 border-y border-zinc-800">
+    <div class="max-w-6xl mx-auto px-4 py-24 grid md:grid-cols-2 gap-12 items-center">
+        <div>
+            <h2 class="font-titulares text-5xl uppercase mb-6">Ubicación y <span class="text-acento">Horarios</span></h2>
+
+            <div class="space-y-6">
+                <div>
+                    <h3 class="font-bold uppercase text-acento mb-1">Dirección</h3>
+                    <p class="text-zinc-300">{{ config.direccion|default:"Merliot, El Salvador" }}</p>
+                </div>
+                <div>
+                    <h3 class="font-bold uppercase text-acento mb-1">Horarios de Fuerza</h3>
+                    {% if config.horarios %}
+                    <p class="text-zinc-300 whitespace-pre-line">{{ config.horarios }}</p>
+                    {% else %}
+                    <p class="text-zinc-300">L-V 5am–10pm · Sáb 7am–3pm</p>
+                    {% endif %}
+                </div>
+                {% if config.numero_whatsapp %}
+                <div>
+                    <h3 class="font-bold uppercase text-acento mb-1">WhatsApp</h3>
+                    <a href="https://wa.me/{{ config.numero_whatsapp|cut:'+' }}"
+                       class="text-zinc-300 hover:text-acento transition">{{ config.numero_whatsapp }}</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {# Mapa embebido de Google Maps (búsqueda por nombre, sin API key) #}
+        <div class="rounded-2xl overflow-hidden border border-zinc-800 h-96">
+            <iframe
+                src="https://www.google.com/maps?q=Strength%20Lab%20Merliot%20El%20Salvador&output=embed"
+                width="100%" height="100%" style="border:0;" allowfullscreen=""
+                loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+                title="Ubicación de Strength Lab">
+            </iframe>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block modal %}
+    {% include "reservas/modal_reserva.html" %}
+{% endblock %}

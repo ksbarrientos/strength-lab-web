@@ -1,0 +1,16 @@
+# Framework web
+django==6.1.2
+
+# Imágenes (fotos de instalaciones y banners)
+pillow==13.0.0
+
+# Exportación de Excel (.xlsx) desde el admin de Django
+openpyxl==3.1.5
+
+# Variables de entorno (.env)
+python-dotenv==1.2.4
+
+# Integraciones Google (Calendar y Sheets)
+google-api-python-client==2.201.0
+google-auth-httplib2==0.4.4
+google-auth-oauthlib==1.5.0

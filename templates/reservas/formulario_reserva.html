@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Reserva tu día gratis | Strength Lab{% endblock %}
+
+{% block content %}
+<h2>Reserva tu día de entrenamiento gratis</h2>
+<p>Completa el formulario y te redirigiremos a WhatsApp para confirmar tu cita.</p>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Reservar mi día gratis</button>
+</form>
+{% endblock %}

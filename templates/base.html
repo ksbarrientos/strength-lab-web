@@ -1,0 +1,67 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Strength Lab{% endblock %}</title>
+    <meta name="description" content="Strength Lab — Entrenamiento personalizado en Merliot. Reserva tu día gratis.">
+
+    {# Tailwind Play CDN: suficiente para este sitio y evita un paso de build (KISS). #}
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        antracita: '#0d0d0f',
+                        acento: '#ef4444',
+                        acento_naranja: '#f97316',
+                    },
+                    fontFamily: {
+                        titulares: ['Anton', 'sans-serif'],
+                        cuerpo: ['Montserrat', 'sans-serif'],
+                    },
+                },
+            },
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-antracita text-white font-cuerpo">
+
+    {# Barra de navegación #}
+    <nav class="fixed top-0 w-full bg-antracita/90 backdrop-blur border-b border-zinc-800 z-40">
+        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+            <a href="#inicio" class="font-titulares text-2xl tracking-wide">
+                STRENGTH <span class="text-acento">LAB</span>
+            </a>
+            <div class="hidden md:flex items-center gap-8 text-sm font-semibold uppercase tracking-wide">
+                <a href="#inicio" class="hover:text-acento transition">Inicio</a>
+                <a href="#planes" class="hover:text-acento transition">Planes</a>
+                <a href="#ubicacion" class="hover:text-acento transition">Instalaciones</a>
+            </div>
+            <button data-abrir-reserva
+                    class="bg-acento hover:bg-acento_naranja px-5 py-2 rounded-full font-bold uppercase text-sm transition">
+                Día Gratis
+            </button>
+        </div>
+    </nav>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    {# Modal de reserva (incluido en la landing) #}
+    {% block modal %}{% endblock %}
+
+    <footer class="border-t border-zinc-800 mt-20 py-8 text-center text-zinc-500 text-sm">
+        <p>&copy; {% now "Y" %} {{ config.nombre_gimnasio|default:"Strength Lab" }} — Merliot, El Salvador</p>
+    </footer>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,24 @@
+# Entorno virtual
+.venv/
+venv/
+
+# Dependencias locales de Google (credenciales sensibles)
+credentials/*
+!credentials/.gitkeep
+
+# Variables de entorno
+.env
+
+# Django
+*.log
+db.sqlite3
+__pycache__/
+*.py[cod]
+staticfiles/
+media/
+
+# Sistema y editores
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
