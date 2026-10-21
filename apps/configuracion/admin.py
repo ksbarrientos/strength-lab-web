@@ -12,7 +12,11 @@ class ConfiguracionSitioAdmin(admin.ModelAdmin):
             'fields': ('nombre_gimnasio', 'slogan', 'direccion', 'horarios'),
         }),
         ('Contacto', {
-            'fields': ('numero_whatsapp', 'correo_notificaciones'),
+            'fields': (
+                'numero_whatsapp',
+                'correo_notificaciones',
+                'mensaje_predeterminado_whatsapp',
+            ),
         }),
         ('Integraciones con Google', {
             'fields': (
@@ -22,6 +26,14 @@ class ConfiguracionSitioAdmin(admin.ModelAdmin):
             'description': (
                 'IDs obtenidos desde Google Cloud Console. Deben coincidir '
                 'con la cuenta de servicio autorizada.'
+            ),
+        }),
+        ('Horarios de la página /agendar/', {
+            'fields': ('hora_manana', 'hora_tarde'),
+            'description': (
+                'Hora exacta que se crea en Google Calendar según el bloque '
+                'elegido. En Google Sheets se registra la etiqueta '
+                '"Mañana" o "Tarde".'
             ),
         }),
     )

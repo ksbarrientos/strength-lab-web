@@ -23,4 +23,6 @@ urlpatterns = [
     path('', include('apps.planes.urls')),
     # Fallback del formulario de reserva (POST clásico, sin modal).
     path('reserva/', include('apps.reservas.urls')),
+    # Página dedicada con calendario y bloques mañana/tarde.
+    path('agendar/', include('apps.reservas.urls_agendar')),
 ]

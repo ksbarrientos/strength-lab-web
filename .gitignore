@@ -22,3 +22,9 @@ media/
 Thumbs.db
 .idea/
 .vscode/
+
+# Artefactos generados por scripts/inspeccionar_sitio.py
+scripts/output_renderizado.html
+scripts/estructura_sitio.json
+scripts/estructura_sitio.md
+scripts/_debug_*.png

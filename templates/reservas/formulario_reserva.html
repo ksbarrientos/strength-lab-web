@@ -8,7 +8,34 @@
 
 <form method="post">
     {% csrf_token %}
-    {{ form.as_p }}
+    {% for campo in form %}
+        {% if campo.name == 'codigo_pais' %}
+        {# Fila combinada: código de país (selector) + dígitos locales #}
+        <p class="flex gap-3">
+            <span class="w-44 shrink-0">
+                <label for="{{ campo.id_for_label }}">{{ campo.label }}</label><br>
+                {{ campo }}
+            </span>
+            <span class="flex-1">
+                <label for="{{ form.telefono.id_for_label }}">{{ form.telefono.label }}</label><br>
+                {{ form.telefono }}
+            </span>
+        </p>
+        {% if campo.errors or form.telefono.errors %}
+        <p class="text-red-400 text-sm mt-1">{{ campo.errors|first }}{{ form.telefono.errors|first }}</p>
+        {% endif %}
+        {% elif campo.name == 'telefono' %}
+        {# Ya se renderizó junto al código de país #}
+        {% else %}
+    <p>
+        <label for="{{ campo.id_for_label }}">{{ campo.label }}</label><br>
+        {{ campo }}
+        {% if campo.errors %}
+        <p class="text-red-400 text-sm mt-1">{{ campo.errors|first }}</p>
+        {% endif %}
+    </p>
+        {% endif %}
+    {% endfor %}
     <button type="submit">Reservar mi día gratis</button>
 </form>
 {% endblock %}

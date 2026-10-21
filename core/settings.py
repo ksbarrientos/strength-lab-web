@@ -154,3 +154,34 @@ MAILERS = {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
+
+
+# Logging
+# Los loggers de las apps propias se muestran en la terminal de `runserver`
+# (por defecto Django solo consola el logger 'django'), lo que permite ver los
+# [RESERVA WEB] y los tracebacks defensivos de google_services al probar el
+# formulario desde el navegador.
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'consola': {
+            'format': '[{levelname}] {asctime} {name}: {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'consola': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'consola',
+        },
+    },
+    'loggers': {
+        'apps': {
+            'handlers': ['consola'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}

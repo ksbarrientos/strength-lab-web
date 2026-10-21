@@ -1,4 +1,13 @@
+from datetime import time
+
 from django.db import models
+
+# Plantilla interna del mensaje de WhatsApp. Se usa cuando el admin deja
+# vacío `mensaje_predeterminado_whatsapp` (o cuando su plantilla es inválida).
+MENSAJE_WHATSAPP_POR_DEFECTO = (
+    'Hola Strength Lab, soy {nombre}. Agendé mi día gratis para el {fecha} '
+    'a las {hora}. Mi correo es {correo} y mi teléfono es {telefono}.'
+)
 
 
 class ConfiguracionSitio(models.Model):
@@ -25,6 +34,16 @@ class ConfiguracionSitio(models.Model):
         blank=True,
         help_text='Recibe alertas y copias de las reservas de prueba gratis.',
     )
+    mensaje_predeterminado_whatsapp = models.TextField(
+        'mensaje predeterminado de WhatsApp',
+        blank=True,
+        default='',
+        help_text=(
+            'Mensaje que se prellena al confirmar la reserva por WhatsApp. '
+            'Variables disponibles: {nombre}, {fecha}, {hora}, {correo}, '
+            '{telefono}. Si se deja vacío, se usa la plantilla interna.'
+        ),
+    )
 
     google_calendar_id = models.CharField(
         'ID de Google Calendar',
@@ -37,6 +56,23 @@ class ConfiguracionSitio(models.Model):
         max_length=255,
         blank=True,
         help_text='ID de la hoja de cálculo donde se registran los leads.',
+    )
+
+    hora_manana = models.TimeField(
+        'hora de la cita (mañana)',
+        default=time(9, 0),
+        help_text=(
+            'Hora que se agenda en Google Calendar cuando el visitante elige '
+            '"Mañana" en la página /agendar/.'
+        ),
+    )
+    hora_tarde = models.TimeField(
+        'hora de la cita (tarde)',
+        default=time(16, 0),
+        help_text=(
+            'Hora que se agenda en Google Calendar cuando el visitante elige '
+            '"Tarde" en la página /agendar/.'
+        ),
     )
 
     class Meta:

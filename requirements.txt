@@ -10,6 +10,9 @@ openpyxl==3.1.5
 # Variables de entorno (.env)
 python-dotenv==1.2.4
 
+# Inspección de sitios renderizados con JavaScript (scripts/inspeccionar_sitio.py)
+playwright==1.64.0
+
 # Integraciones Google (Calendar y Sheets)
 google-api-python-client==2.201.0
 google-auth-httplib2==0.4.4

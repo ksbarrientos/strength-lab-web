@@ -1,4 +1,4 @@
-{# Modal de reserva de día gratis. Consuma el formulario vía fetch (JSON). #}
+{# Modal de reserva: POST normal a /reserva/ con target="_blank". #}
 <div id="modal-reserva" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
     {# Fondo oscuro que cierra el modal al hacer clic #}
     <div data-cerrar-reserva class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
@@ -9,15 +9,37 @@
                 class="absolute top-4 right-4 text-zinc-400 hover:text-white text-2xl leading-none"
                 aria-label="Cerrar">&times;</button>
 
-        {# Encabezado y formulario #}
+        {# Formulario #}
         <div id="reserva-contenido">
             <h3 class="font-titulares text-3xl uppercase mb-2">Agenda tu <span class="text-acento">día gratis</span></h3>
-            <p class="text-zinc-400 text-sm mb-6">Completa el formulario y te redirigiremos a WhatsApp para confirmar.</p>
+            <p class="text-zinc-400 text-sm mb-6">Completa el formulario y te llevaremos a WhatsApp para confirmar.</p>
 
-            <form id="form-reserva" method="post" action="{% url 'reservas:reserva_dia_gratis' %}">
+            <form id="form-reserva" method="post" target="_blank" action="{% url 'reservas:reserva_dia_gratis' %}">
                 {% csrf_token %}
                 <div class="space-y-4">
                     {% for campo in form_reserva %}
+                        {% if campo.name == 'codigo_pais' %}
+                        {# Fila combinada: código de país (selector) + dígitos locales #}
+                        <div class="flex gap-3">
+                            <div class="w-44 shrink-0">
+                                <label for="{{ campo.id_for_label }}" class="block text-sm font-semibold text-zinc-300 mb-1">
+                                    {{ campo.label }}
+                                </label>
+                                {{ campo }}
+                            </div>
+                            <div class="flex-1">
+                                <label for="{{ form_reserva.telefono.id_for_label }}" class="block text-sm font-semibold text-zinc-300 mb-1">
+                                    {{ form_reserva.telefono.label }}
+                                </label>
+                                {{ form_reserva.telefono }}
+                            </div>
+                        </div>
+                        {% if campo.errors or form_reserva.telefono.errors %}
+                        <p class="text-red-400 text-sm mt-1">{{ campo.errors|first }}{{ form_reserva.telefono.errors|first }}</p>
+                        {% endif %}
+                        {% elif campo.name == 'telefono' %}
+                        {# Ya se renderizó junto al código de país #}
+                        {% else %}
                     <div>
                         <label for="{{ campo.id_for_label }}" class="block text-sm font-semibold text-zinc-300 mb-1">
                             {{ campo.label }}
@@ -27,30 +49,29 @@
                         <p class="text-red-400 text-sm mt-1">{{ campo.errors|first }}</p>
                         {% endif %}
                     </div>
+                        {% endif %}
                     {% endfor %}
                 </div>
 
-                {# Errores generales del formulario #}
-                <p id="reserva-error-general" class="hidden text-red-400 text-sm mt-4">
-                    No pudimos procesar tu solicitud. Intenta de nuevo o contáctanos por WhatsApp.
-                </p>
-
                 <button type="submit"
-                        class="mt-6 w-full bg-acento hover:bg-acento_naranja py-3 rounded-full font-bold uppercase tracking-wide transition">
+                        class="mt-6 w-full bg-acento hover:bg-acento_naranja py-3 rounded-full font-bold uppercase tracking-wide transition disabled:opacity-60 disabled:cursor-not-allowed">
                     Reservar mi día gratis
                 </button>
             </form>
         </div>
 
-        {# Pantalla de confirmación (se muestra tras el envío exitoso) #}
-        <div id="reserva-exito" class="hidden text-center py-8">
+        {# Confirmación en la pestaña del sitio (el POST se abre en otra pestaña) #}
+        <div id="reserva-confirmacion" class="hidden text-center py-8">
             <div class="text-6xl mb-4">💪</div>
-            <h3 class="font-titulares text-3xl uppercase mb-2">¡Reserva <span class="text-acento">lista</span>!</h3>
-            <p class="text-zinc-400 mb-6">Te abriremos WhatsApp para que confirmes tu día gratis con el gimnasio.</p>
-            <a id="reserva-enlace-whatsapp" href="#"
-               class="inline-block bg-green-500 hover:bg-green-600 px-8 py-3 rounded-full font-bold uppercase transition">
-                Abrir WhatsApp
-            </a>
+            <h3 class="font-titulares text-3xl uppercase mb-2">¡Solicitud <span class="text-acento">enviada</span>!</h3>
+            <p class="text-zinc-400 text-sm mb-6">
+                Abrimos una pestaña nueva para que confirmes tu cita por WhatsApp.
+                Si no se abrió, permite las ventanas emergentes y vuelve a intentarlo.
+            </p>
+            <button type="button" data-cerrar-reserva
+                    class="w-full bg-zinc-800 hover:bg-zinc-700 py-3 rounded-full font-bold uppercase tracking-wide transition">
+                Cerrar
+            </button>
         </div>
     </div>
 </div>
@@ -59,67 +80,40 @@
 (function () {
     const modal = document.getElementById('modal-reserva');
     const contenido = document.getElementById('reserva-contenido');
-    const exito = document.getElementById('reserva-exito');
-    const enlaceWhatsapp = document.getElementById('reserva-enlace-whatsapp');
-    const form = document.getElementById('form-reserva');
-    const errorGeneral = document.getElementById('reserva-error-general');
+    const confirmacion = document.getElementById('reserva-confirmacion');
+    const formulario = document.getElementById('form-reserva');
+    const botonEnviar = formulario.querySelector('button[type="submit"]');
 
-    function abrirModal() {
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        document.body.style.overflow = 'hidden';
-    }
-
-    function cerrarModal() {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-        document.body.style.overflow = '';
-        // Restaura el formulario para una próxima reserva.
-        setTimeout(function () {
-            contenido.classList.remove('hidden');
-            exito.classList.add('hidden');
-            errorGeneral.classList.add('hidden');
-        }, 300);
+    function reiniciar() {
+        formulario.reset();
+        botonEnviar.disabled = false;
+        contenido.classList.remove('hidden');
+        confirmacion.classList.add('hidden');
     }
 
     document.querySelectorAll('[data-abrir-reserva]').forEach(function (boton) {
-        boton.addEventListener('click', abrirModal);
+        boton.addEventListener('click', function (evento) {
+            // En la landing el acceso es un enlace a /agendar/: se intercepta
+            // para abrir el modal. Sin JS (o en otras páginas) navega normal.
+            evento.preventDefault();
+            reiniciar();
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        });
     });
+
     document.querySelectorAll('[data-cerrar-reserva]').forEach(function (boton) {
-        boton.addEventListener('click', cerrarModal);
+        boton.addEventListener('click', function () {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        });
     });
 
-    form.addEventListener('submit', async function (evento) {
-        evento.preventDefault();
-        errorGeneral.classList.add('hidden');
-
-        try {
-            const respuesta = await fetch(form.action, {
-                method: 'POST',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value,
-                },
-                body: new FormData(form),
-            });
-
-            const datos = await respuesta.json();
-
-            if (datos.ok) {
-                // Pantalla de confirmación; WhatsApp se abre tras un breve
-                // instante para que el usuario alcance a leerla.
-                contenido.classList.add('hidden');
-                exito.classList.remove('hidden');
-                enlaceWhatsapp.href = datos.url_whatsapp;
-                setTimeout(function () {
-                    window.location.href = datos.url_whatsapp;
-                }, 2000);
-            } else {
-                errorGeneral.classList.remove('hidden');
-            }
-        } catch (error) {
-            errorGeneral.classList.remove('hidden');
-        }
+    // Doble envío: deshabilita el botón y muestra la confirmación en esta pestaña.
+    formulario.addEventListener('submit', function () {
+        botonEnviar.disabled = true;
+        contenido.classList.add('hidden');
+        confirmacion.classList.remove('hidden');
     });
 })();
 </script>
