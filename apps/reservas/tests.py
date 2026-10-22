@@ -7,6 +7,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from apps.configuracion.models import ConfiguracionSitio
+from apps.planes.models import PlanEntrenamiento
 
 from .forms import DIAS_MAXIMOS_RESERVA
 class ReservaDiaGratisTests(TestCase):
@@ -151,7 +152,7 @@ class PaginaAgendarTests(TestCase):
         self.config.hora_tarde = time(16, 0)
         self.config.save()
 
-        self.url = reverse('agendar:pagina_agendar')
+        self.url = reverse('reservas:pagina_agendar')
         self.fecha = _dia_habil()
         self.datos = {
             'nombre': 'Ana Pérez',
@@ -176,6 +177,24 @@ class PaginaAgendarTests(TestCase):
     def test_la_navegacion_enlaza_la_pagina(self):
         respuesta = self.client.get(reverse('planes:index'))
         self.assertContains(respuesta, 'href="/agendar/"')
+        # El navbar debe tener un único acceso: el botón "Día Gratis".
+        self.assertNotContains(respuesta, 'Agendar cita')
+        # La portada no debe quedar con ningún botón huérfano del modal viejo.
+        self.assertNotContains(respuesta, 'data-abrir-reserva')
+        self.assertNotContains(respuesta, 'modal-reserva')
+
+    def test_los_llamados_a_la_accion_van_al_calendario(self):
+        PlanEntrenamiento.objects.create(
+            nombre='Plan Prueba', precio=50, sesiones_texto='5 sesiones'
+        )
+
+        respuesta = self.client.get(reverse('planes:index'))
+        html = respuesta.content.decode()
+
+        # Navbar + hero + una tarjeta por plan activo: todos apuntan a /agendar/.
+        self.assertGreaterEqual(html.count('href="/agendar/"'), 3)
+        self.assertContains(respuesta, 'Agenda tu día de prueba gratis')
+        self.assertContains(respuesta, 'Empezar ahora')
 
     @patch('apps.reservas.views.threading.Thread')
     def test_post_manana_agenda_a_las_09_y_redirige(self, mock_thread):

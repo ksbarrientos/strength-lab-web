@@ -19,10 +19,10 @@
             Entrenamiento personalizado con los mejores entrenadores.
             Agenda tu día de prueba gratis y descubre la experiencia {{ config.nombre_gimnasio }}.
         </p>
-        <button data-abrir-reserva
-                class="mt-10 bg-acento hover:bg-acento_naranja px-10 py-4 rounded-full font-bold uppercase tracking-wide text-lg transition transform hover:scale-105">
-            Reserva tu día gratis
-        </button>
+        <a href="{% url 'reservas:pagina_agendar' %}"
+           class="mt-10 inline-block bg-acento hover:bg-acento_naranja px-10 py-4 rounded-full font-bold uppercase tracking-wide text-lg transition transform hover:scale-105">
+            Agenda tu día de prueba gratis
+        </a>
     </div>
 </section>
 
@@ -38,6 +38,15 @@
             <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-acento text-white text-xs font-bold uppercase px-4 py-1 rounded-full">
                 Más Popular
             </span>
+            {% endif %}
+
+            {% if plan.imagen %}
+            <div class="-mx-8 -mt-8 mb-6 overflow-hidden rounded-t-2xl">
+                <img src="{{ plan.imagen.url }}"
+                     alt="{{ plan.nombre }}"
+                     loading="lazy"
+                     class="w-full h-48 object-cover object-top">
+            </div>
             {% endif %}
 
             <h3 class="font-titulares text-2xl uppercase">{{ plan.nombre }}</h3>
@@ -63,15 +72,15 @@
             </ul>
             {% endif %}
 
-            <button data-abrir-reserva
-                    class="mt-auto w-full py-3 rounded-full font-bold uppercase text-sm transition
-                           {% if plan.es_popular %}
-                               bg-acento hover:bg-acento_naranja
-                           {% else %}
-                               border border-zinc-600 hover:border-acento hover:text-acento
-                           {% endif %}">
+            <a href="{% url 'reservas:pagina_agendar' %}"
+               class="mt-auto block w-full text-center py-3 rounded-full font-bold uppercase text-sm transition
+                      {% if plan.es_popular %}
+                          bg-acento hover:bg-acento_naranja
+                      {% else %}
+                          border border-zinc-600 hover:border-acento hover:text-acento
+                      {% endif %}">
                 Empezar ahora
-            </button>
+            </a>
         </div>
         {% empty %}
         <p class="col-span-full text-center text-zinc-500">Aún no hay planes disponibles.</p>
@@ -119,8 +128,4 @@
         </div>
     </div>
 </section>
-{% endblock %}
-
-{% block modal %}
-    {% include "reservas/modal_reserva.html" %}
 {% endblock %}

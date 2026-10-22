@@ -141,8 +141,10 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 # Carpeta destino de `collectstatic` para despliegues con servidor externo.
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Archivos multimedia subidos desde el panel admin (fotos de instalaciones).
-MEDIA_URL = 'media/'
+# Archivos multimedia subidos desde el panel admin (portadas de planes, fotos
+# de instalaciones). La barra inicial es obligatoria: si MEDIA_URL fuera
+# relativo, las imágenes se romperían en rutas anidadas como /agendar/.
+MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 

@@ -43,7 +43,7 @@
             {# --------------------------- FORMULARIO --------------------------- #}
             <div id="agendar-contenido">
                 <form id="form-agendar" method="post" target="_blank"
-                      action="{% url 'agendar:pagina_agendar' %}">
+                      action="{% url 'reservas:pagina_agendar' %}">
                     {% csrf_token %}
 
                     {# TUS DATOS #}
@@ -189,7 +189,7 @@
                     Si no se abrió, permite las ventanas emergentes y vuelve a intentarlo.
                     Si tus datos necesitan corrección, esa pestaña mostrará el formulario con los errores.
                 </p>
-                <a href="{% url 'agendar:pagina_agendar' %}"
+                <a href="{% url 'reservas:pagina_agendar' %}"
                    class="mt-8 inline-block bg-zinc-800 hover:bg-zinc-700 px-8 py-3 rounded-full font-bold uppercase tracking-wide transition">
                     Hacer otra solicitud
                 </a>

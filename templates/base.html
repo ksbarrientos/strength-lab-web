@@ -44,14 +44,10 @@
                 <a href="{% url 'planes:index' %}#planes" class="hover:text-acento transition">Planes</a>
                 <a href="{% url 'planes:index' %}#ubicacion" class="hover:text-acento transition">Instalaciones</a>
             </div>
-            {# Dos accesos: página /agendar/ y modal rápido (el modal intercepta el clic solo en la landing). #}
-            <div class="flex items-center gap-2 sm:gap-3 shrink-0">
-                <a href="{% url 'agendar:pagina_agendar' %}"
-                   class="border border-zinc-700 hover:border-acento hover:text-acento px-4 py-2 rounded-full font-bold uppercase text-xs sm:text-sm whitespace-nowrap transition">
-                    Agendar cita
-                </a>
-                <a href="{% url 'agendar:pagina_agendar' %}" data-abrir-reserva
-                   class="bg-acento hover:bg-acento_naranja px-4 sm:px-5 py-2 rounded-full font-bold uppercase text-xs sm:text-sm whitespace-nowrap transition">
+            {# Único acceso al flujo de reserva: la página del calendario. #}
+            <div class="flex items-center shrink-0">
+                <a href="{% url 'reservas:pagina_agendar' %}"
+                   class="bg-acento hover:bg-acento_naranja px-5 py-2 rounded-full font-bold uppercase text-xs sm:text-sm whitespace-nowrap transition">
                     Día Gratis
                 </a>
             </div>
@@ -61,9 +57,6 @@
     <main>
         {% block content %}{% endblock %}
     </main>
-
-    {# Modal de reserva (incluido en la landing) #}
-    {% block modal %}{% endblock %}
 
     <footer class="border-t border-zinc-800 mt-20 py-8 text-center text-zinc-500 text-sm">
         <p>&copy; {% now "Y" %} {{ config.nombre_gimnasio|default:"Strength Lab" }} — Merliot, El Salvador</p>

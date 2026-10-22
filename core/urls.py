@@ -14,15 +14,20 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # Landing page pública (hero, planes, ubicación y modal de reserva).
+    # Reservas: /agendar/ (flujo oficial con calendario) y /reserva/ (legado).
+    path('', include('apps.reservas.urls')),
+    # Landing page pública (hero, planes y ubicación).
     path('', include('apps.planes.urls')),
-    # Fallback del formulario de reserva (POST clásico, sin modal).
-    path('reserva/', include('apps.reservas.urls')),
-    # Página dedicada con calendario y bloques mañana/tarde.
-    path('agendar/', include('apps.reservas.urls_agendar')),
 ]
+
+# En desarrollo, Django sirve las imágenes subidas al admin (media/planes/…).
+# En producción el servidor web debe exponer MEDIA_ROOT por su cuenta.
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

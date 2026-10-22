@@ -7,7 +7,7 @@ from .models import PlanEntrenamiento
 
 
 def index(request):
-    """Landing page pública: hero, planes, ubicación y modal de reserva."""
+    """Landing page pública: hero, planes y ubicación."""
     context = {
         'planes': PlanEntrenamiento.objects.filter(activo=True),
         'config': ConfiguracionSitio.obtener_configuracion(),

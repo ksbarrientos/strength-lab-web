@@ -81,7 +81,7 @@ def reserva_dia_gratis(request):
 
     form = FormularioReserva(request.POST)
     if not form.is_valid():
-        # Con el modal abierto en otra pestaña, los errores se muestran aquí.
+        # Ruta heredada: si los datos fallan, los errores se muestran aquí.
         return render(
             request,
             'reservas/formulario_reserva.html',

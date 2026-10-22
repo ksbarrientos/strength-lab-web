@@ -6,10 +6,23 @@ Uso:
 Es idempotente: puede ejecutarse varias veces sin duplicar registros.
 """
 
+from pathlib import Path
+
+from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from apps.configuracion.models import ConfiguracionSitio
 from apps.planes.models import PlanEntrenamiento
+
+# Portadas descargadas por scripts/descargar_imagenes.py. Si el archivo no
+# existe (por ejemplo, en un servidor recién desplegado), el plan se queda sin
+# imagen en vez de guardar una ruta rota.
+IMAGENES_PLANES = {
+    'Plan Élite': 'plan-elite.jpg',
+    'Plan Progreso': 'plan-progreso.jpg',
+    'Plan Inicial': 'plan-inicial.jpg',
+    'Plan Básico': 'plan-basico.jpg',
+}
 
 
 class Command(BaseCommand):
@@ -60,7 +73,19 @@ class Command(BaseCommand):
             },
         ]
 
+        carpeta_imagenes = Path(settings.MEDIA_ROOT) / 'planes'
         for datos in planes:
+            archivo = IMAGENES_PLANES.get(datos['nombre'])
+            if archivo:
+                if (carpeta_imagenes / archivo).is_file():
+                    datos['imagen'] = f'planes/{archivo}'
+                else:
+                    self.stdout.write(self.style.WARNING(
+                        f'  Sin portada para {datos["nombre"]}: falta '
+                        f'media/planes/{archivo} '
+                        '(ejecuta scripts/descargar_imagenes.py).'
+                    ))
+
             plan, creado = PlanEntrenamiento.objects.update_or_create(
                 nombre=datos['nombre'], defaults=datos
             )

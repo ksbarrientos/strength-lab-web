@@ -12,6 +12,13 @@ class PlanEntrenamiento(models.Model):
         help_text='Ej.: "8 sesiones al mes".',
     )
     descripcion = models.TextField('descripción', blank=True)
+    imagen = models.ImageField(
+        'imagen de portada',
+        upload_to='planes/',
+        blank=True,
+        null=True,
+        help_text='Foto que se muestra en la tarjeta del plan (opcional).',
+    )
     beneficios = models.TextField(
         'beneficios',
         blank=True,

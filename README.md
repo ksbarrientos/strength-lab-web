@@ -4,14 +4,16 @@ Sitio web y panel de administración para el gimnasio **Strength Lab**, construi
 
 ## Características del proyecto
 
-- **Landing page pública** con estética deportiva oscura (Tailwind vía CDN): hero, grid de planes dinámico, sección de ubicación/horarios con mapa embebido y **modal de reserva** con **POST normal** (`target="_blank"`), sin `fetch`, sin `window.open` y sin pestañas en blanco. El sitio muestra una confirmación inmediata en la pestaña actual y el formulario se procesa en la pestaña nueva.
+- **Landing page pública** con estética deportiva oscura (Tailwind vía CDN): hero, grid de planes dinámico y sección de ubicación/horarios con mapa embebido. Todos los llamados a la acción (navbar, hero y tarjetas de planes) son enlaces directos a la página **`/agendar/`**, el flujo oficial y único de reserva.
 - Configuración global editable desde el admin (WhatsApp, correo de notificaciones, mensaje de WhatsApp e IDs de Google).
 - CMS ligero para planes de entrenamiento e información del sitio.
 - **Reserva de día gratis**: Django procesa el formulario, responde con un `HttpResponseRedirect` a WhatsApp y envía la cita a Google Sheets y Calendar **en un hilo en segundo plano**, para que la respuesta web sea instantánea.
 - **Mensaje de WhatsApp configurable** desde el admin con las variables `{nombre}`, `{fecha}`, `{hora}`, `{correo}` y `{telefono}`. Si el campo se deja vacío, se usa una plantilla interna con esas mismas variables.
-- **Selector de código de país** en el formulario y el modal (El Salvador +503 por defecto, +1, +502, +504, +506, +52); el teléfono se concatena como `+50378538605` antes de enviarlo a Sheets, Calendar y WhatsApp.
-- **Página dedicada `/agendar/`**: réplica funcional del formulario del sitio de referencia (título "AGENDA TU DÍA DE PRUEBA", sección de datos, calendario mensual, toggle **MAÑANA/TARDE** y botón "CONFIRMAR POR WHATSAPP"), con validación, registro en Google Sheets y evento en Google Calendar a la hora configurada para cada bloque. Convive con el modal rápido de la landing.
+- **Selector de código de país** en el formulario (El Salvador +503 por defecto, +1, +502, +504, +506, +52); el teléfono se concatena como `+50378538605` antes de enviarlo a Sheets, Calendar y WhatsApp.
+- **Página dedicada `/agendar/`**: flujo oficial y único de reserva (título "AGENDA TU DÍA DE PRUEBA", sección de datos, calendario mensual interactivo, toggle **MAÑANA/TARDE** y botón "CONFIRMAR POR WHATSAPP"), con validación, registro en Google Sheets y evento en Google Calendar a la hora configurada para cada bloque. Sin modal intermedio.
+- **Portadas de los planes**: `PlanEntrenamiento.imagen` (`ImageField`, opcional) se muestra en la tarjeta de la landing cuando existe. Las fotos se pueden subir desde el admin o descargar del sitio de referencia con `scripts/descargar_imagenes.py`; `poblar_contenido` las asocia por nombre.
 - **Script de inspección de sitios con JavaScript** (`scripts/inspeccionar_sitio.py`, Playwright + Chromium): captura la pantalla completa, el HTML ya renderizado y la estructura de clases, textos y formularios de cualquier SPA, incluida la del sitio de referencia.
+- **Script de descarga de imágenes** (`scripts/descargar_imagenes.py`, Playwright + Chromium): extrae las imágenes de `<img>`, `srcset`, fondos CSS y metas `og:image` de un sitio renderizado y las guarda en `media/planes/` con nombres limpios.
 
 ### Arquitectura de leads (importante)
 
@@ -41,7 +43,11 @@ Copy-Item .env.example .env
 # 4. Aplicar migraciones
 python manage.py migrate
 
-# 5. Poblar datos iniciales (4 planes + configuración del sitio)
+# 4b. Descargar las portadas de los planes desde el sitio de referencia
+python scripts/descargar_imagenes.py
+
+# 5. Poblar datos iniciales (4 planes + configuración del sitio).
+#    Si las imágenes existen en media/planes/, se asocian a cada plan.
 python manage.py poblar_contenido
 
 # 6. Crear usuario administrador
@@ -74,11 +80,12 @@ strengthlab/
 │   ├── planes/                  # PlanEntrenamiento + vista index (landing)
 │   ├── reservas/                # formulario de reserva (sin modelo) + vista de redirección
 │   └── integraciones/           # google_services.py (Sheets y Calendar) + comando probar_google
-├── templates/                   # base.html, index.html + reservas/ (modal)
+├── templates/                   # base.html, index.html + reservas/ (calendario)
 ├── static/                      # CSS, JS e imágenes globales
 │   └── capturas_referencia/     # capturas de referencia (sitio_original.png)
-├── scripts/                     # utilidades de desarrollo (inspeccionar_sitio.py)
-├── media/                       # Archivos multimedia subidos (admin)
+├── scripts/                     # utilidades (inspeccionar_sitio.py, descargar_imagenes.py)
+├── media/                       # Archivos multimedia subidos (admin) y descargados
+│   └── planes/                  # Portadas de los planes (ignoradas por git)
 ├── credentials/                 # google_service_account.json (ignorado en git)
 ├── requirements.txt
 ├── .env.example
@@ -89,9 +96,9 @@ strengthlab/
 
 | Ruta | Descripción |
 | --- | --- |
-| `/` | Landing pública (hero, planes, ubicación y modal de reserva). |
-| `/agendar/` | Página dedicada de reserva: datos, calendario mensual y bloque mañana/tarde. |
-| `/reserva/` | POST del formulario de reserva (redirige a WhatsApp) y formulario clásico para visitas directas sin JS. |
+| `/` | Landing pública (hero, planes y ubicación). Sus CTA llevan a `/agendar/`. |
+| `/agendar/` | **Flujo oficial de reserva**: datos, calendario mensual y bloque mañana/tarde. |
+| `/reserva/` | Ruta heredada del formulario con hora manual (sin enlaces en la interfaz); se conserva como respaldo y redirige a WhatsApp. |
 | `/admin/` | Panel de administración. |
 
 ## Configurar las integraciones con Google
@@ -144,12 +151,58 @@ Los eventos se crean en el calendario del gimnasio con el nombre `Día gratis - 
 ## Cómo probar la reserva de día gratis
 
 1. Arrancar el servidor: `python manage.py runserver`.
-2. Abrir `http://127.0.0.1:8000/` y hacer clic en **"Día Gratis"** (o "Reserva tu día gratis" en el hero).
-3. Llenar el modal (nombre, correo, código de país + teléfono local, fecha y hora) y enviar. El formulario hace un **POST normal** a `/reserva/` en una **pestaña nueva** (`target="_blank"`), sin `fetch` ni `window.open`. En la pestaña del sitio, el modal oculta el formulario y muestra **"¡Solicitud enviada!"**.
+2. Abrir `http://127.0.0.1:8000/` y hacer clic en cualquier CTA (**"Día Gratis"** en el navbar, **"Agenda tu día de prueba gratis"** en el hero o **"Empezar ahora"** en una tarjeta de plan). Todos navegan a `/agendar/`.
+3. En `/agendar/` elegir el día en el calendario, alternar **MAÑANA/TARDE**, completar los datos y enviar. El formulario hace un **POST normal** a `/agendar/` en una **pestaña nueva** (`target="_blank"`), sin `fetch` ni `window.open`.
 4. La pestaña nueva recibe la redirección de Django (`HttpResponseRedirect`) y abre WhatsApp con el mensaje prellenado. Si los datos no son válidos, esa pestaña muestra el formulario con los errores.
-5. El script del modal solo abre/cierra, reinicia el formulario y **deshabilita el botón en el `submit`** para evitar envíos dobles.
-6. El formulario clásico sin modal está en `http://127.0.0.1:8000/reserva/`.
-7. Si las integraciones están configuradas, verificar la fila nueva en Sheets (el teléfono debe aparecer con `+`, ej. `+50378538605`) y el evento en Calendar. La sincronización corre en un hilo en segundo plano, así que la redirección a WhatsApp no espera a Google; en la terminal de `runserver` se ven los `[RESERVA WEB]` con los IDs usados y cualquier warning de las integraciones.
+5. La pestaña original muestra **"¡Solicitud enviada!"** y deshabilita el botón para evitar envíos dobles.
+6. Si las integraciones están configuradas, verificar la fila nueva en Sheets (el teléfono debe aparecer con `+`, ej. `+50378538605`) y el evento en Calendar. La sincronización corre en un hilo en segundo plano, así que la redirección a WhatsApp no espera a Google; en la terminal de `runserver` se ven los `[AGENDAR]` con los IDs usados y cualquier warning de las integraciones.
+7. La ruta heredada `/reserva/` (formulario con fecha y hora manual) sigue disponible para pruebas directas, pero ya no se enlaza desde ninguna página y no aparece ningún modal en la landing.
+
+## Imágenes de los planes
+
+`PlanEntrenamiento` tiene un campo opcional `imagen` (`ImageField`, `upload_to='planes/'`). La tarjeta de la landing lo muestra como portada cuando el plan tiene imagen; si no, se renderiza igual que antes, sin hueco.
+
+### Subir una portada desde el admin
+
+En `/admin/` → **Planes de entrenamiento** → abrir un plan y subir el archivo en **Imagen de portada**. La imagen queda en `media/planes/` con el nombre que traiga el archivo. El listado del admin muestra una miniatura de cada portada.
+
+### Descargar las portadas del sitio de referencia
+
+`scripts/descargar_imagenes.py` abre la URL con Playwright, espera a que la SPA termine de cargar y descarga todas las imágenes detectadas:
+
+- elementos `<img>` (incluye la variante elegida de `srcset`),
+- `background-image` calculados por el navegador,
+- metas `og:image` / `twitter:image`.
+
+```powershell
+# Descarga el sitio de referencia en media/planes/ (comportamiento por defecto)
+python scripts/descargar_imagenes.py
+
+# Otra URL u otra carpeta
+python scripts/descargar_imagenes.py https://www.strengthlabcenter.com/ --salida media/planes
+
+# Con el navegador visible, o esperando más segundos antes de extraer
+python scripts/descargar_imagenes.py --mostrar
+python scripts/descargar_imagenes.py --espera 5
+```
+
+El script es idempotente: si el archivo ya existe con el mismo tamaño, lo omite. Limpia el hash de compilación de Vite (`plan-elite-Cl0brlr9.jpg` → `plan-elite.jpg`), quita acentos y caracteres problemáticos, y añade un sufijo (`-2`, `-3`…) si hay colisión de nombres.
+
+Después de descargar, ejecutar `python manage.py poblar_contenido` asocia automáticamente:
+
+| Plan | Archivo esperado |
+| --- | --- |
+| Plan Élite | `media/planes/plan-elite.jpg` |
+| Plan Progreso | `media/planes/plan-progreso.jpg` |
+| Plan Inicial | `media/planes/plan-inicial.jpg` |
+| Plan Básico | `media/planes/plan-basico.jpg` |
+
+Si un archivo no existe, el comando avisa con un warning y deja el plan sin portada (no guarda rutas rotas).
+
+### Servir `media/` en desarrollo y producción
+
+- **Desarrollo**: `core/urls.py` agrega las rutas de `MEDIA_URL` solo cuando `settings.DEBUG` es `True`, así que `http://127.0.0.1:8000/media/planes/plan-elite.jpg` funciona con `runserver`.
+- **Producción**: Django **no** sirve media con `DEBUG=False`. En PythonAnywhere hay que crear un *static files mapping* de `/media/` a la carpeta `media/` del proyecto (o servirla con Nginx/Apache). La carpeta `media/` está en `.gitignore`, por lo que las imágenes descargadas **no viajan con el código**: hay que subirlas al servidor o cargarlas desde el admin.
 
 ## Inspeccionar un sitio con JavaScript (Playwright)
 
@@ -180,20 +233,21 @@ python scripts/inspeccionar_sitio.py <url> --sin-fallback
 
 ### Página `/agendar/` (calendario + mañana/tarde)
 
-1. Arrancar el servidor y abrir `http://127.0.0.1:8000/agendar/` (también se llega desde **"Agendar cita"** en la barra de navegación).
+1. Arrancar el servidor y abrir `http://127.0.0.1:8000/agendar/` (también se llega desde el botón **"Día Gratis"** de la barra de navegación).
 2. Elegir el día en el calendario: los días pasados, los domingos y los que superan los **90 días** de ventana aparecen deshabilitados.
 3. Alternar **MAÑANA** / **TARDE**; el valor se guarda en el input oculto `horario` (`manana`/`tarde`).
 4. Enviar: el formulario hace un **POST normal** a `/agendar/` con `target="_blank"`. La vista valida, agenda en Calendar a la hora configurada y escribe en Sheets.
 5. La pestaña original muestra "¡Solicitud enviada!" y deshabilita el botón; la nueva abre WhatsApp con el mensaje prellenado.
 
-Diferencias con el modal de la landing:
+Diferencias con la ruta heredada `/reserva/`:
 
-| Aspecto | Modal (`/reserva/`) | Página `/agendar/` |
+| Aspecto | `/reserva/` (legado, sin enlaces) | `/agendar/` (flujo oficial) |
 | --- | --- | --- |
 | Fecha y hora | `input type="date"` + `input type="time"` | calendario propio + bloque mañana/tarde |
 | Hora en Calendar | la que elige el usuario | `ConfiguracionSitio.hora_manana` (09:00) o `hora_tarde` (16:00) |
 | Hora en Sheets | `HH:MM` | etiqueta `Mañana` / `Tarde` |
 | Validación extra | — | no domingos, máximo 90 días, nombre sin dígitos |
+| Acceso en la interfaz | ninguno | navbar, hero y tarjetas de planes |
 
 Las reglas viven en `apps/reservas/forms.py`: `DIAS_CERRADOS = (6,)` (domingo) y `DIAS_MAXIMOS_RESERVA = 90`. El calendario recibe `DIAS_MAXIMOS` desde la vista; si cambias la constante, el límite del JS se actualiza solo. Los días cerrados también deben ajustarse en `DIA_CERRADO` del script de la plantilla.
 
@@ -214,6 +268,7 @@ python manage.py test apps.reservas apps.integraciones
 | `python manage.py test` | Ejecutar las pruebas (incluye `apps.reservas.tests` para el flujo de reserva). |
 | `python manage.py probar_google` | Diagnosticar credenciales, Google Sheets y Calendar (con `--sin-escribir` y `--conservar-evento`). |
 | `python scripts/inspeccionar_sitio.py <url>` | Inspeccionar una web con JavaScript: captura, HTML renderizado y estructura (requiere `playwright install chromium`). |
+| `python scripts/descargar_imagenes.py` | Descargar las imágenes del sitio de referencia a `media/planes/` (requiere `playwright install chromium`). |
 | `python manage.py createsuperuser` | Crear usuario del admin. |
 | `python manage.py check` | Verificar la configuración del proyecto. |
 
